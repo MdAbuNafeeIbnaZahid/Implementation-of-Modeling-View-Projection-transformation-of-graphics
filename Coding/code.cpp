@@ -498,6 +498,8 @@ struct Vector
         this->z = z;
 	}
 
+
+
     Vector operator+(const Vector &p) const
     {
         return Vector(x+p.x, y+p.y, z+p.z);
@@ -577,6 +579,7 @@ struct Vector
 
     void rotateAroundVector( const Vector &vec, double radAngle )
     {
+        assert(false);
 
         if ( isParallel(vec) )
         {
@@ -619,31 +622,94 @@ const Vector unitZVec(0,0,1);
 
 struct Point
 {
-    static const LL sz = 4;
-    double ar[sz];
+    double ar[SIZE];
 
     Point()
     {
-        FOR(a,0,sz-1)
+        FOR(a,0,SIZE-1)
         {
             ar[a] = 0;
         }
-        ar[sz-1] = 1;
+        ar[SIZE-1] = 1;
     }
+
+    double getX() const
+    {
+        return ar[0];
+    }
+
+    double getY() const
+    {
+        return ar[1];
+    }
+
+    double getZ() const
+    {
+        return ar[2];
+    }
+
+    double setX( double x )
+    {
+        ar[0] = x;
+    }
+
+    double setY(double y)
+    {
+        ar[1] = y;
+    }
+
+    double setZ( double z )
+    {
+        ar[2] = z;
+    }
+
+    Point(double x, double y, double z)
+    {
+        ar[0] = x;
+        ar[1] = y;
+        ar[2] = z;
+
+        ar[3] = 1;
+    }
+
+    Vector operator - (const Point &B) const
+    {
+        double x = this->getX() - B.getX();
+        double y = this->getY() - B.getY();
+        double z = this->getZ() - B.getZ();
+
+        Vector ret(x,y,z);
+        return ret;
+    }
+};
+
+
+Point takePointInput( ifstream &in )
+{
+    double x, y, z;
+    in >> x >> y >> z;
+    Point ret(x,y,z);
+
+    return ret;
+}
+
+
+struct gluLookAtParam
+{
+
 };
 
 
 
 struct Matrix
 {
-    static const LL sz = 4;
-    double ar[sz][sz];
+    double ar[SIZE][SIZE];
 
     Matrix()
     {
-        FOR(a,0,sz)
+        FOR(a,0,SIZE)
         {
-            FOR(b,0,sz)
+            FOR(b,0,SIZE)
             {
                 ar[a][b] = 0;
             }
@@ -652,8 +718,8 @@ struct Matrix
 
     double getVal(LL row, LL col) const
     {
-        assert( row >= 0 && row < sz );
-        assert( col >= 0 && col < sz );
+        assert( row >= 0 && row < SIZE );
+        assert( col >= 0 && col < SIZE );
 
         return ar[row][col];
     }
@@ -661,12 +727,12 @@ struct Matrix
     Matrix operator * ( const Matrix &B ) const
     {
         Matrix ret;
-        FOR(a,0,sz)
+        FOR(a,0,SIZE)
         {
-            FOR(b,0,sz)
+            FOR(b,0,SIZE)
             {
                 ret.ar[a][b] = 0;
-                FOR(c,0,sz)
+                FOR(c,0,SIZE)
                 {
                     ret.ar[a][b] += (this->getVal(a,c) * B.getVal(c,b) );
                 }
@@ -678,11 +744,23 @@ struct Matrix
 
     Point operator * ( const Point &P ) const
     {
-        assert(false);
+
         Point ret;
-//        FOR(a,)
+        FOR(a,0,SIZE)
+        {
+            ret.ar[a] = 0;
+            FOR(b,0,SIZE)
+            {
+                ret.ar[a] += (this->ar)[a][b] * P.ar[b];
+            }
+        }
+
+        return ret;
     }
 };
+
+
+stack<Matrix> matStak;
 
 
 int main()
