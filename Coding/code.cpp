@@ -487,69 +487,120 @@ LL resetBit(LL num, LL pos)
 #define eps 1e-6
 
 
-struct Vector
+struct PointOrVector
 {
-	double x,y,z;
-    Vector(){}
-	Vector(double x, double y, double z)
-	{
-        this->x = x;
-        this->y = y;
-        this->z = z;
-	}
+    int X_POS = 0;
+    int Y_POS = 1;
+    int Z_POS = 2;
+    double ar[SIZE] = {0, 0, 0, 1};
 
-
-
-    Vector operator+(const Vector &p) const
+    PointOrVector()
     {
-        return Vector(x+p.x, y+p.y, z+p.z);
+        for (int a = 0; a < SIZE; a++)
+        {
+            ar[a] = 0;
+        }
+        ar[SIZE-1] = 1;
     }
 
-    Vector operator*(double i) const
+    double getX() const
     {
-        return Vector( x*i, y*i, z*i );
+        return ar[X_POS];
     }
 
-    Vector operator+=(const Vector &p)
+    double getY() const
     {
-        this->x += p.x;
-        this->y += p.y;
-        this->z += p.z;
+        return ar[Y_POS];
+    }
+
+    double getZ() const
+    {
+        return ar[Z_POS];
+    }
+
+    double setX( double x )
+    {
+        ar[X_POS] = x;
+    }
+
+    double setY(double y)
+    {
+        ar[Y_POS] = y;
+    }
+
+    double setZ( double z )
+    {
+        ar[Z_POS] = z;
+    }
+
+    PointOrVector(double x, double y, double z)
+    {
+        setX(x);
+        setY(y);
+        setZ(z);
+    }
+
+    PointOrVector operator - (const PointOrVector &B) const
+    {
+        double x = this->getX() - B.getX();
+        double y = this->getY() - B.getY();
+        double z = this->getZ() - B.getZ();
+
+        PointOrVector ret(x,y,z);
+        return ret;
+    }
+
+
+    PointOrVector operator+(const PointOrVector &p) const
+    {
+        return PointOrVector(getX()+p.getX(), getY()+p.getY(), getZ()+p.getZ());
+    }
+
+    PointOrVector operator*(double i) const
+    {
+        return PointOrVector( getX()*i, getY()*i, getZ()*i );
+    }
+
+    PointOrVector operator+=(const PointOrVector &p)
+    {
+        this->setX( this->getX() + p.getX() );
+        this->setY( this->getY() + p.getY() );
+        this->setZ( this->getZ() + p.getZ() );
+
 
         return *this;
     }
 
-    Vector operator-=(const Vector &p)
+    PointOrVector operator-=(const PointOrVector &p)
     {
         (*this) += p * (-1);
 
         return *this;
     }
 
-    Vector getCrossProduct(const Vector &p) const
+    PointOrVector getCrossProduct(const PointOrVector &p) const
     {
-        Vector ret;
+        double x = this->getY() * p.getZ() - this->getZ() * p.getY();
+        double y = this->getZ() * p.getX() - this->getX() * p.getZ();
+        double z = this->getX() * p.getY() - this->getY() * p.getX();
 
-        ret.x = this->y * p.z - this->z * p.y;
-        ret.y = this->z * p.x - this->x * p.z;
-        ret.z = this->x * p.y - this->y * p.x;
-
+        PointOrVector ret(x,y,z);
         return ret;
     }
 
     double getDisFromMain() const
     {
-        return sqrt(x*x + y*y + z*z);
+        return sqrt(getX()*getX() + getY()*getY() + getZ()*getZ() );
     }
 
-    double getDotProduct(const Vector &p) const
+    double getDotProduct(const PointOrVector &p) const
     {
-        return (this->x) * p.x + (this->y) * p.y + (this->z) * p.z;
+        return (this->getX()) * p.getX() + (this->getY()) * p.getY() + (this->getZ()) * p.getZ();
     }
 
-    bool isParallel( const Vector &p ) const
+    bool isParallel( const PointOrVector &p ) const
     {
-        Vector crossVec = getCrossProduct(p);
+        PointOrVector crossVec = getCrossProduct(p);
         if ( crossVec.getDisFromMain() <= eps )
         {
             return true;
@@ -563,132 +614,73 @@ struct Vector
         return ( abs(getDisFromMain() - 1) <= eps );
     }
 
-    bool isPerpendicular( const Vector &p ) const
+    bool isPerpendicular( const PointOrVector &p ) const
     {
         return ( abs( getDotProduct(p) ) <= eps );
     }
 
-    Vector getNormalizedVec()
+    PointOrVector getNormalizedVec()
     {
         double disFromMain = getDisFromMain();
-        Vector copyVec(this->x, this->y, this->z);
-        Vector unitVector = copyVec * ( 1 / disFromMain );
+        PointOrVector copyVec(this->getX(), this->getY(), this->getZ());
+        PointOrVector unitPointOrVector = copyVec * ( 1 / disFromMain );
 
-        return unitVector;
+        return unitPointOrVector;
     }
 
-    void rotateAroundVector( const Vector &vec, double radAngle )
-    {
-        assert(false);
-
-        if ( isParallel(vec) )
-        {
-            return;
-        }
-
-//        cout << vec.x << " " << vec.y << " " << vec.z << endl;
-
-        Vector unitVec = this->getNormalizedVec();
-
-
-//        cout << unitVec.x << " " << unitVec.y << " " << unitVec.z << endl;
-
-//        cout << unitVec.getDisFromMain() << endl;
-        assert( ( "unit vector is not unit", unitVec.isUnit() ) ) ;
-
-        Vector perpendicularUnitVector = unitVec;
-        assert( ( " Given vector is not perpendicular ", this->isPerpendicular(perpendicularUnitVector) )   );
-
-
-        Vector crossVector = perpendicularUnitVector.getCrossProduct(*this);
-
-        this->x = this->x * cos(radAngle) + crossVector.x * sin(radAngle);
-        this->y = this->y * cos(radAngle) + crossVector.y * sin(radAngle);
-        this->z = this->z * cos(radAngle) + crossVector.z * sin(radAngle);
-
-    }
+//    void rotateAroundPointOrVector( const PointOrVector &vec, double radAngle )
+//    {
+//        assert(false);
+//
+//        if ( isParallel(vec) )
+//        {
+//            return;
+//        }
+//
+////        cout << vec.x << " " << vec.y << " " << vec.z << endl;
+//
+//        PointOrVector unitVec = this->getNormalizedVec();
+//
+//
+////        cout << unitVec.x << " " << unitVec.y << " " << unitVec.z << endl;
+//
+////        cout << unitVec.getDisFromMain() << endl;
+//        assert( ( "unit PointOrVector is not unit", unitVec.isUnit() ) ) ;
+//
+//        PointOrVector perpendicularUnitPointOrVector = unitVec;
+//        assert( ( " Given PointOrVector is not perpendicular ", this->isPerpendicular(perpendicularUnitPointOrVector) )   );
+//
+//
+//        PointOrVector crossPointOrVector = perpendicularUnitPointOrVector.getCrossProduct(*this);
+//
+//        this->x = this->x * cos(radAngle) + crossPointOrVector.x * sin(radAngle);
+//        this->y = this->y * cos(radAngle) + crossPointOrVector.y * sin(radAngle);
+//        this->z = this->z * cos(radAngle) + crossPointOrVector.z * sin(radAngle);
+//
+//    }
 
 
 
 };
 
 
-const Vector unitXVec(1,0,0);
-const Vector unitYVec(0,1,0);
-const Vector unitZVec(0,0,1);
+
+
+
+const PointOrVector unitXVec(1,0,0);
+const PointOrVector unitYVec(0,1,0);
+const PointOrVector unitZVec(0,0,1);
 
 
 
 
-struct Point
-{
-    double ar[SIZE];
-
-    Point()
-    {
-        FOR(a,0,SIZE-1)
-        {
-            ar[a] = 0;
-        }
-        ar[SIZE-1] = 1;
-    }
-
-    double getX() const
-    {
-        return ar[0];
-    }
-
-    double getY() const
-    {
-        return ar[1];
-    }
-
-    double getZ() const
-    {
-        return ar[2];
-    }
-
-    double setX( double x )
-    {
-        ar[0] = x;
-    }
-
-    double setY(double y)
-    {
-        ar[1] = y;
-    }
-
-    double setZ( double z )
-    {
-        ar[2] = z;
-    }
-
-    Point(double x, double y, double z)
-    {
-        ar[0] = x;
-        ar[1] = y;
-        ar[2] = z;
-
-        ar[3] = 1;
-    }
-
-    Vector operator - (const Point &B) const
-    {
-        double x = this->getX() - B.getX();
-        double y = this->getY() - B.getY();
-        double z = this->getZ() - B.getZ();
-
-        Vector ret(x,y,z);
-        return ret;
-    }
-};
 
 
-Point takePointInput( ifstream &in )
+PointOrVector takePointInput( ifstream &in )
 {
     double x, y, z;
     in >> x >> y >> z;
-    Point ret(x,y,z);
+    PointOrVector ret(x,y,z);
 
     return ret;
 }
@@ -742,10 +734,10 @@ struct Matrix
         return ret;
     }
 
-    Point operator * ( const Point &P ) const
+    PointOrVector operator * ( const PointOrVector &P ) const
     {
 
-        Point ret;
+        PointOrVector ret;
         FOR(a,0,SIZE)
         {
             ret.ar[a] = 0;
