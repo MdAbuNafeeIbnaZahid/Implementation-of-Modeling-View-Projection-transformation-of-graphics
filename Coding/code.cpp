@@ -533,12 +533,22 @@ struct PointOrVector
         ar[Z_POS] = z;
     }
 
+
+    PointOrVector( ifstream &in )
+    {
+        double x, y, z;
+        in >> x >> y >> z;
+        PointOrVector(x,y,z);
+    }
+
     PointOrVector(double x, double y, double z)
     {
         setX(x);
         setY(y);
         setZ(z);
     }
+
+
 
     PointOrVector operator - (const PointOrVector &B) const
     {
@@ -686,8 +696,27 @@ PointOrVector takePointInput( ifstream &in )
 }
 
 
-struct gluLookAtParam
+struct GluLookAtParam
 {
+
+    PointOrVector eyePosition;
+    PointOrVector lookPosition;
+    PointOrVector upDirection;
+
+    double perspectiveAr[4];
+
+    GluLookAtParam( ifstream &in )
+    {
+        eyePosition = PointOrVector(in);
+        lookPosition = PointOrVector(in);
+        upDirection = PointOrVector(in);
+
+        FOR(a,0,4)
+        {
+            in >> perspectiveAr[a];
+        }
+    }
+
 
 };
 
@@ -763,7 +792,11 @@ int main()
     ofstream stage2("stage2.txt");
     ofstream stage3("stage3.txt");
 
+    GluLookAtParam gluLookAtParam(fin);
 
+    string str;
+    fin >> str;
+    cout << str;
 
 
     fin.close();
