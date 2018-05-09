@@ -555,9 +555,7 @@ struct PointOrVector
 
     PointOrVector(double x, double y, double z, double w)
     {
-        setX(x);
-        setY(y);
-        setZ(z);
+        PointOrVector(x,y,z);
         setW(w);
     }
 
@@ -622,7 +620,12 @@ struct PointOrVector
 
     double getDotProduct(const PointOrVector &p) const
     {
-        return (this->getX()) * p.getX() + (this->getY()) * p.getY() + (this->getZ()) * p.getZ();
+        double ret = 0;
+        for (int i = 0; i < SIZE; i++)
+        {
+            ret += this->ar[i] * p.ar[i];
+        }
+        return ret;
     }
 
     bool isParallel( const PointOrVector &p ) const
@@ -719,7 +722,6 @@ struct Triangle
 
     Triangle()
     { }
-
 };
 
 
