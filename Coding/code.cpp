@@ -492,6 +492,7 @@ struct PointOrVector
     int X_POS = 0;
     int Y_POS = 1;
     int Z_POS = 2;
+    int W_POS = 3;
     double ar[SIZE] = {0, 0, 0, 1};
 
     PointOrVector()
@@ -518,28 +519,32 @@ struct PointOrVector
         return ar[Z_POS];
     }
 
-    double setX( double x )
+    double getW() const
+    {
+        return ar[W_POS];
+    }
+
+
+    void setX( double x )
     {
         ar[X_POS] = x;
     }
 
-    double setY(double y)
+    void setY(double y)
     {
         ar[Y_POS] = y;
     }
 
-    double setZ( double z )
+    void setZ( double z )
     {
         ar[Z_POS] = z;
     }
 
-
-    PointOrVector( ifstream &in )
+    void setW( double w )
     {
-        double x, y, z;
-        in >> x >> y >> z;
-        PointOrVector(x,y,z);
+        ar[W_POS] = w;
     }
+
 
     PointOrVector(double x, double y, double z)
     {
@@ -548,22 +553,34 @@ struct PointOrVector
         setZ(z);
     }
 
+    PointOrVector(double x, double y, double z, double w)
+    {
+        setX(x);
+        setY(y);
+        setZ(z);
+        setW(w);
+    }
 
 
     PointOrVector operator - (const PointOrVector &B) const
     {
-        double x = this->getX() - B.getX();
-        double y = this->getY() - B.getY();
-        double z = this->getZ() - B.getZ();
-
-        PointOrVector ret(x,y,z);
+        PointOrVector ret;
+        for (int i = 0; i < SIZE; i++)
+        {
+            ret.ar[i] = this->ar[i] - B.ar[i];
+        }
         return ret;
     }
 
 
     PointOrVector operator+(const PointOrVector &p) const
     {
-        return PointOrVector(getX()+p.getX(), getY()+p.getY(), getZ()+p.getZ());
+        PointOrVector ret;
+        for (int i = 0; i < SIZE; i++)
+        {
+            ret.ar[i] = this->ar[i] + p.ar[i];
+        }
+        return ret;
     }
 
     PointOrVector operator*(double i) const
@@ -573,10 +590,10 @@ struct PointOrVector
 
     PointOrVector operator+=(const PointOrVector &p)
     {
-        this->setX( this->getX() + p.getX() );
-        this->setY( this->getY() + p.getY() );
-        this->setZ( this->getZ() + p.getZ() );
-
+        for (int i = 0;  i < SIZE; i++)
+        {
+            this->ar[i] += p.ar[i];
+        }
 
         return *this;
     }
@@ -696,6 +713,26 @@ PointOrVector takePointInput( ifstream &in )
 }
 
 
+struct Triangle
+{
+    PointOrVector ar[3];
+
+    Triangle()
+    { }
+
+};
+
+
+Triangle takeTriangleInput( ifstream in )
+{
+    Triangle ret;
+    for (int a = 0; a < 3; a++)
+    {
+        ret.ar[a] = takePointInput(in);
+    }
+    return ret;
+}
+
 struct GluLookAtParam
 {
 
@@ -707,9 +744,9 @@ struct GluLookAtParam
 
     GluLookAtParam( ifstream &in )
     {
-        eyePosition = PointOrVector(in);
-        lookPosition = PointOrVector(in);
-        upDirection = PointOrVector(in);
+        eyePosition = takePointInput(in);
+        lookPosition = takePointInput(in);
+        upDirection = takePointInput(in);
 
         FOR(a,0,4)
         {
