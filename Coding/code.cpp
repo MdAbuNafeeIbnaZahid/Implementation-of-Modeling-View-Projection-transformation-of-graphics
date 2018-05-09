@@ -794,9 +794,10 @@ int main()
 
     GluLookAtParam gluLookAtParam(fin);
 
-    string str;
-    fin >> str;
-    cout << str;
+    string command;
+    fin >> command;
+
+    cout << command;
 
 
     fin.close();
