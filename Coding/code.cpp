@@ -582,9 +582,15 @@ struct PointOrVector
         return ret;
     }
 
-    PointOrVector operator*(double i) const
+    PointOrVector operator*(double multiplier) const
     {
-        return PointOrVector( getX()*i, getY()*i, getZ()*i );
+        PointOrVector ret;
+        for (int a = 0; a < SIZE; a++)
+        {
+            ret.ar[a] = this->ar[a] * multiplier;
+        }
+
+        return ret;
     }
 
     PointOrVector operator+=(const PointOrVector &p)
@@ -945,6 +951,15 @@ Matrix getScaleMatrix(ifstream &in)
     double sx, sy, sz;
     in >> sx >> sy >> sz;
     return getScaleMatrix(sx, sy, sz);
+}
+
+PointOrVector getRodriVec( PointOrVector rotatee, PointOrVector axisOfRot, double angleInRad )
+{
+    PointOrVector ret = rotatee * cos(angleInRad)
+                        + axisOfRot * (1 - cos(angleInRad) ) * rotatee.getDotProduct(axisOfRot)
+                        + axisOfRot.getCrossProduct(rotatee) * sin(angleInRad);
+
+    return ret;
 }
 
 
