@@ -694,6 +694,16 @@ struct PointOrVector
 };
 
 
+ostream& operator<<(ostream &os, const PointOrVector& p)  {
+        for (int i = 0; i < 3; i++)
+        {
+            os << p.ar[i] << " ";
+        }
+        os << endl;
+        return os;
+}
+
+
 
 
 
@@ -722,7 +732,18 @@ struct Triangle
 
     Triangle()
     { }
+
 };
+
+ostream& operator<<(ostream &os, const Triangle& t)  {
+    for (int i = 0; i < 3; i++)
+    {
+        os << t.ar[i] << endl;
+    }
+    os << endl;
+
+    return os;
+}
 
 
 Triangle takeTriangleInput( ifstream in )
@@ -784,6 +805,14 @@ struct Matrix
         return ar[row][col];
     }
 
+    void setVal(LL row, LL col, double val)
+    {
+        assert( row >= 0 && row < SIZE );
+        assert( col >= 0 && col < SIZE );
+
+        ar[row][col] = val;
+    }
+
     Matrix operator * ( const Matrix &B ) const
     {
         Matrix ret;
@@ -820,7 +849,30 @@ struct Matrix
 };
 
 
+Matrix getIdentityMatrix()
+{
+    Matrix mat;
+    FOR(a,0,SIZE)
+    {
+        FOR(b,0,SIZE)
+        {
+            if ( a==b )
+            {
+                mat.ar[a][b] = 1;
+            }
+            else
+            {
+                mat.ar[a][b] = 0;
+            }
+        }
+    }
+}
+
 stack<Matrix> matStak;
+const Matrix IDENTITY_MATRIX = getIdentityMatrix();
+
+
+Matrix curModelingMat = IDENTITY_MATRIX;
 
 
 int main()
@@ -834,9 +886,43 @@ int main()
     GluLookAtParam gluLookAtParam(fin);
 
     string command;
-    fin >> command;
+    while(fin >> command)
+    {
+        if (command == "triangle")
+        {
 
-    cout << command;
+        }
+        else if ( command == "translate" )
+        {
+
+        }
+        else if ( command == "scale" )
+        {
+
+        }
+        else if ( command == "rotate" )
+        {
+
+        }
+        else if ( command == "push" )
+        {
+
+        }
+        else if ( command == "pop" )
+        {
+
+        }
+        else if ( command == "end" )
+        {
+            break;
+        }
+        else
+        {
+            assert( false);
+        }
+    }
+
+
 
 
     fin.close();
