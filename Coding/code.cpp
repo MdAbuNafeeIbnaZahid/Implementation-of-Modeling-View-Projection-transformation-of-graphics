@@ -485,6 +485,7 @@ LL resetBit(LL num, LL pos)
 /******   END OF HEADER *********/
 #define SIZE 4
 #define eps 1e-6
+#define PRECISION 6
 
 
 struct PointOrVector
@@ -695,12 +696,12 @@ struct PointOrVector
 
 
 ostream& operator<<(ostream &os, const PointOrVector& p)  {
-        for (int i = 0; i < 3; i++)
-        {
-            os << p.ar[i] << " ";
-        }
-        os << endl;
-        return os;
+    for (int i = 0; i < 3; i++)
+    {
+        os << p.ar[i] << " ";
+    }
+    os << endl;
+    return os;
 }
 
 
@@ -736,12 +737,19 @@ struct Triangle
 };
 
 ostream& operator<<(ostream &os, const Triangle& t)  {
+
+    streamsize prevPrecision = os.precision();
+
+    os.setf(ios::fixed,ios::floatfield);
+    os.precision(PRECISION);
+
     for (int i = 0; i < 3; i++)
     {
-        os << t.ar[i] << endl;
+        os << t.ar[i];
     }
     os << endl;
 
+    os.precision( prevPrecision );
     return os;
 }
 
@@ -833,7 +841,8 @@ struct Matrix
 
     PointOrVector operator * ( const PointOrVector &P ) const
     {
-
+//        dbg( (*this) );
+        dbg( P );
         PointOrVector ret;
         FOR(a,0,SIZE)
         {
@@ -844,9 +853,37 @@ struct Matrix
             }
         }
 
+
+        dbg(ret);
+        return ret;
+    }
+
+    Triangle operator * ( const Triangle &T ) const
+    {
+        Triangle ret;
+        FOR(a,0,3)
+        {
+            ret.ar[a] = (*this) * (T.ar[a]);
+        }
+
         return ret;
     }
 };
+
+ostream& operator<<(ostream &os, const Matrix& m)  {
+    os << endl;
+    for (int i = 0; i < SIZE; i++)
+    {
+        for (int j = 0; j < SIZE; j++)
+        {
+            os << m.ar[i][j] << " ";
+        }
+        os << endl;
+    }
+    os << endl;
+    return os;
+}
+
 
 
 Matrix getIdentityMatrix()
@@ -866,6 +903,7 @@ Matrix getIdentityMatrix()
             }
         }
     }
+    return mat;
 }
 
 const Matrix IDENTITY_MATRIX = getIdentityMatrix();
@@ -933,7 +971,13 @@ int main()
         cout << command << endl;
         if (command == "triangle")
         {
-            Triangle triangle = takeTriangleInput(fin);
+            Triangle inputTriangle = takeTriangleInput(fin);
+
+            dbg( inputTriangle );
+            dbg( curModelingMat );
+            Triangle triangleAfterModelingTransform = curModelingMat * inputTriangle;
+            dbg(triangleAfterModelingTransform);
+            stage1 << triangleAfterModelingTransform;
         }
         else if ( command == "push" )
         {
@@ -966,6 +1010,8 @@ int main()
             {
                 assert(false);
             }
+
+            curModelingMat = curModelingMat * newModelMatrix;
         }
     }
 
