@@ -746,7 +746,7 @@ ostream& operator<<(ostream &os, const Triangle& t)  {
 }
 
 
-Triangle takeTriangleInput( ifstream in )
+Triangle takeTriangleInput( ifstream &in )
 {
     Triangle ret;
     for (int a = 0; a < 3; a++)
@@ -868,8 +868,50 @@ Matrix getIdentityMatrix()
     }
 }
 
-stack<Matrix> matStak;
 const Matrix IDENTITY_MATRIX = getIdentityMatrix();
+
+Matrix getTranslateMatrix(double tx, double ty, double tz)
+{
+    return IDENTITY_MATRIX;
+}
+
+
+Matrix getTranslateMatrix(ifstream &in)
+{
+    double tx, ty, tz;
+    in >> tx >> ty >> tz;
+    return getTranslateMatrix(tx, ty, tz);
+}
+
+Matrix getScaleMatrix(double sx, double sy, double sz)
+{
+    return IDENTITY_MATRIX;
+}
+
+
+Matrix getScaleMatrix(ifstream &in)
+{
+    double sx, sy, sz;
+    in >> sx >> sy >> sz;
+    return getScaleMatrix(sx, sy, sz);
+}
+
+
+Matrix getRotateMatrix( double angle, double ax, double ay, double az )
+{
+    return IDENTITY_MATRIX;
+}
+
+Matrix getRotateMatrix(ifstream &in)
+{
+    double angle, ax, ay, az;
+    in >> angle >> ax >> ay >> az;
+    return getRotateMatrix(angle, ax, ay, az);
+}
+
+
+stack<Matrix> matStak;
+
 
 
 Matrix curModelingMat = IDENTITY_MATRIX;
@@ -888,29 +930,18 @@ int main()
     string command;
     while(fin >> command)
     {
+        cout << command << endl;
         if (command == "triangle")
         {
-
-        }
-        else if ( command == "translate" )
-        {
-
-        }
-        else if ( command == "scale" )
-        {
-
-        }
-        else if ( command == "rotate" )
-        {
-
+            Triangle triangle = takeTriangleInput(fin);
         }
         else if ( command == "push" )
         {
-
+            matStak.push( curModelingMat );
         }
         else if ( command == "pop" )
         {
-
+            matStak.pop();
         }
         else if ( command == "end" )
         {
@@ -918,7 +949,23 @@ int main()
         }
         else
         {
-            assert( false);
+            Matrix newModelMatrix;
+            if ( command == "translate" )
+            {
+                newModelMatrix = getTranslateMatrix(fin);
+            }
+            else if ( command == "scale" )
+            {
+                newModelMatrix = getScaleMatrix(fin);
+            }
+            else if ( command == "rotate" )
+            {
+                newModelMatrix = getRotateMatrix(fin);
+            }
+            else
+            {
+                assert(false);
+            }
         }
     }
 
