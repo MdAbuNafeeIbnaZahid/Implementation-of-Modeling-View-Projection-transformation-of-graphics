@@ -910,7 +910,13 @@ const Matrix IDENTITY_MATRIX = getIdentityMatrix();
 
 Matrix getTranslateMatrix(double tx, double ty, double tz)
 {
-    return IDENTITY_MATRIX;
+    Matrix ret = getIdentityMatrix();
+
+    ret.ar[0][3] = tx;
+    ret.ar[0][1] = ty;
+    ret.ar[0][2] = tz;
+
+    return ret;
 }
 
 
@@ -923,7 +929,14 @@ Matrix getTranslateMatrix(ifstream &in)
 
 Matrix getScaleMatrix(double sx, double sy, double sz)
 {
-    return IDENTITY_MATRIX;
+    Matrix ret;
+
+    ret.ar[0][0] = sx;
+    ret.ar[1][1] = sy;
+    ret.ar[2][2] = sz;
+    ret.ar[3][3] = 1;
+
+    return ret;
 }
 
 
