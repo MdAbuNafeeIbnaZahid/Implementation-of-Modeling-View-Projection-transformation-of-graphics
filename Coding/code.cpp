@@ -777,32 +777,6 @@ Triangle takeTriangleInput( ifstream &in )
     return ret;
 }
 
-struct GluLookAtParam
-{
-
-    PointOrVector eyePosition;
-    PointOrVector lookPosition;
-    PointOrVector upDirection;
-
-    double perspectiveAr[4];
-
-    GluLookAtParam( ifstream &in )
-    {
-        eyePosition = takePointInput(in);
-        lookPosition = takePointInput(in);
-        upDirection = takePointInput(in);
-
-        FOR(a,0,4)
-        {
-            in >> perspectiveAr[a];
-        }
-    }
-
-
-};
-
-
-
 struct Matrix
 {
     double ar[SIZE][SIZE];
@@ -1015,6 +989,64 @@ Matrix getRotateMatrix(ifstream &in)
     double angleInRad = angleInDeg * PI / 180;
     return getRotateMatrix(angleInRad, ax, ay, az);
 }
+
+
+
+struct GluLookAtParam
+{
+
+    PointOrVector eyePosition;
+    PointOrVector lookPosition;
+    PointOrVector upDirection;
+
+    double perspectiveAr[4];
+
+    GluLookAtParam( ifstream &in )
+    {
+        eyePosition = takePointInput(in);
+        lookPosition = takePointInput(in);
+        upDirection = takePointInput(in);
+
+        FOR(a,0,4)
+        {
+            in >> perspectiveAr[a];
+        }
+    }
+
+private:
+    PointOrVector getLookVector()
+    {
+        PointOrVector lookVector = lookPosition - eyePosition;
+        return lookVector.getNormalizedVec();
+    }
+
+    PointOrVector getRightVector()
+    {
+        PointOrVector lookVector = getLookVector();
+        PointOrVector rightVector = lookVector.getCrossProduct( upDirection );
+        rightVector = rightVector.getNormalizedVec();
+
+        return rightVector;
+    }
+
+    PointOrVector getDerivedUpDirection()
+    {
+        PointOrVector lookVector = getLookVector();
+        PointOrVector rightVector = getRightVector();
+        PointOrVector derivedUpDirection = rightVector.getCrossProduct(lookVector);
+
+        return derivedUpDirection;
+    }
+
+    Matrix getTranslationMatrix()
+    {
+        Matrix translationMat = getTranslateMatrix(-eyePosition.getX(), -eyePosition.getY(), -eyePosition.getZ());
+        return translationMat;
+    }
+};
+
+
+
 
 
 stack<Matrix> matStak;
