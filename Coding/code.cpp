@@ -668,6 +668,18 @@ struct PointOrVector
         return unitPointOrVector;
     }
 
+    PointOrVector getWithUnitW()
+    {
+        double prevW = ar[W_POS];
+
+        PointOrVector ret;
+        for (int i = 0; i < SIZE; i++)
+        {
+            ret.ar[i] = ar[i] / prevW;
+        }
+        return ret;
+    }
+
 //    void rotateAroundPointOrVector( const PointOrVector &vec, double radAngle )
 //    {
 //        assert(false);
@@ -900,8 +912,8 @@ Matrix getTranslateMatrix(double tx, double ty, double tz)
     Matrix ret = getIdentityMatrix();
 
     ret.ar[0][3] = tx;
-    ret.ar[0][1] = ty;
-    ret.ar[0][2] = tz;
+    ret.ar[1][3] = ty;
+    ret.ar[2][3] = tz;
 
     return ret;
 }
@@ -999,18 +1011,13 @@ struct GluLookAtParam
     PointOrVector lookPosition;
     PointOrVector upDirection;
 
-    double perspectiveAr[4];
+
 
     GluLookAtParam( ifstream &in )
     {
         eyePosition = takePointInput(in);
         lookPosition = takePointInput(in);
         upDirection = takePointInput(in);
-
-        FOR(a,0,4)
-        {
-            in >> perspectiveAr[a];
-        }
     }
 
 private:
@@ -1029,7 +1036,7 @@ private:
         return rightVector;
     }
 
-    PointOrVector getDerivedUpDirection()
+    PointOrVector getDerivedUpVector()
     {
         PointOrVector lookVector = getLookVector();
         PointOrVector rightVector = getRightVector();
@@ -1041,10 +1048,97 @@ private:
     Matrix getTranslationMatrix()
     {
         Matrix translationMat = getTranslateMatrix(-eyePosition.getX(), -eyePosition.getY(), -eyePosition.getZ());
+        dbg(translationMat);
         return translationMat;
     }
+
+    Matrix getRotationMatrix()
+    {
+        PointOrVector rAr[3];
+        rAr[0] = getRightVector();
+        rAr[1] = getDerivedUpVector();
+        rAr[2] = getLookVector() * (-1);
+
+        Matrix ret = getIdentityMatrix();
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                ret.ar[i][j] = rAr[i].ar[j];
+            }
+        }
+
+        return ret;
+    }
+
+public:
+
+    Matrix getViewTransformMatrix()
+    {
+        Matrix rotationMatrix = getRotationMatrix();
+        Matrix translationMatrix = getTranslationMatrix();
+
+        Matrix ret = rotationMatrix * translationMatrix;
+        return ret;
+    }
+
 };
 
+
+struct GluPerspectiveParam
+{
+
+private:
+
+    double fovY, aspectRatio, near, far;
+
+public:
+    GluPerspectiveParam( ifstream &in )
+    {
+        in >> fovY >> aspectRatio >> near >> far;
+        fovY = fovY * PI / 180;
+    }
+
+private:
+    Matrix getProjectionMatrix() const
+    {
+        double fovX = fovY * aspectRatio;
+        double t = near * tan(fovY/2);
+        double r = near * tan(fovX/2);
+
+        Matrix ret;
+        ret.ar[0][0] = near/r;
+        ret.ar[1][1] = near/t;
+        ret.ar[2][2] = -(far+near)/(far-near);
+        ret.ar[2][3] = -(2*far*near)/(far-near);
+        ret.ar[3][2] = -1;
+
+        return ret;
+    }
+
+    PointOrVector getProjectedPoint (const PointOrVector &p) const
+    {
+        Matrix projectionMat = getProjectionMatrix();
+
+        PointOrVector ret = projectionMat * p;
+        ret = ret.getWithUnitW();
+
+        return ret;
+    }
+
+
+public:
+    Triangle getProjectedTriangle(const Triangle &t) const
+    {
+        Triangle ret;
+        for (int i = 0; i < 3; i++)
+        {
+            ret.ar[i] = getProjectedPoint(t.ar[i]);
+        }
+
+        return ret;
+    }
+};
 
 
 
@@ -1065,6 +1159,11 @@ int main()
     ofstream stage3("stage3.txt");
 
     GluLookAtParam gluLookAtParam(fin);
+    Matrix viewTransformationMatrix = gluLookAtParam.getViewTransformMatrix();
+
+    GluPerspectiveParam gluPerspectiveParam(fin);
+
+    dbg( viewTransformationMatrix );
 
     string command;
     while(fin >> command)
@@ -1079,6 +1178,13 @@ int main()
             Triangle triangleAfterModelingTransform = curModelingMat * inputTriangle;
             dbg(triangleAfterModelingTransform);
             stage1 << triangleAfterModelingTransform;
+
+            Triangle triangleAfterViewTransformation = viewTransformationMatrix * triangleAfterModelingTransform;
+            stage2 << triangleAfterViewTransformation;
+
+            Triangle triangleAfterProjectionTransformation =
+                gluPerspectiveParam.getProjectedTriangle(triangleAfterViewTransformation);
+            stage3 << triangleAfterProjectionTransformation;
         }
         else if ( command == "push" )
         {
@@ -1092,6 +1198,8 @@ int main()
         else if ( command == "end" )
         {
             stage1 << endl;
+            stage2 << endl;
+            stage3 << endl;
             break;
         }
         else
