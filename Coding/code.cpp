@@ -485,7 +485,7 @@ LL resetBit(LL num, LL pos)
 /******   END OF HEADER *********/
 #define SIZE 4
 #define eps 1e-6
-#define PRECISION 6
+#define PRECISION 7
 
 
 struct PointOrVector
@@ -628,8 +628,11 @@ struct PointOrVector
     double getDotProduct(const PointOrVector &p) const
     {
         double ret = 0;
-        for (int i = 0; i < SIZE; i++)
+
+        // for dot product w is out of context.    So   i < SIZE-1
+        for (int i = 0; i < SIZE-1; i++)
         {
+            dbg2( this->ar[i], p.ar[i] );
             ret += this->ar[i] * p.ar[i];
         }
         return ret;
@@ -704,7 +707,11 @@ struct PointOrVector
 ostream& operator<<(ostream &os, const PointOrVector& p)  {
     for (int i = 0; i < 3; i++)
     {
-        os << p.ar[i] << " ";
+        os << p.ar[i];
+        if (i < 2)
+        {
+            os << " ";
+        }
     }
     os << endl;
     return os;
@@ -955,24 +962,58 @@ Matrix getScaleMatrix(ifstream &in)
 
 PointOrVector getRodriVec( PointOrVector rotatee, PointOrVector axisOfRot, double angleInRad )
 {
-    PointOrVector ret = rotatee * cos(angleInRad)
-                        + axisOfRot * (1 - cos(angleInRad) ) * rotatee.getDotProduct(axisOfRot)
-                        + axisOfRot.getCrossProduct(rotatee) * sin(angleInRad);
+    dbg("in getRodriVec");
+    dbg3(rotatee, axisOfRot, angleInRad);
 
+    PointOrVector alongRotatee = rotatee * cos(angleInRad);
+    dbg(alongRotatee);
+
+    PointOrVector alongAxisOfRot = axisOfRot * (1 - cos(angleInRad) ) * rotatee.getDotProduct(axisOfRot);
+    dbg(rotatee.getDotProduct(axisOfRot));
+    dbg(alongAxisOfRot);
+
+    PointOrVector perpendicularToRotateeAndAxisOfRot = axisOfRot.getCrossProduct(rotatee) * sin(angleInRad);
+    dbg(perpendicularToRotateeAndAxisOfRot);
+
+    PointOrVector ret = alongRotatee + alongAxisOfRot + perpendicularToRotateeAndAxisOfRot;
+    dbg(ret);
     return ret;
 }
 
 
-Matrix getRotateMatrix( double angle, double ax, double ay, double az )
+Matrix getRotateMatrix( double angleInRad, double ax, double ay, double az )
 {
-    return IDENTITY_MATRIX;
+    dbg(angleInRad);
+    PointOrVector rotationAxis(ax, ay, az);
+    PointOrVector normalizedRotationAxis = rotationAxis.getNormalizedVec();
+    dbg(normalizedRotationAxis);
+
+    PointOrVector cAr[3];
+
+    cAr[0] = getRodriVec(unitXVec, normalizedRotationAxis, angleInRad);
+    cAr[1] = getRodriVec(unitYVec, normalizedRotationAxis, angleInRad);
+    cAr[2] = getRodriVec(unitZVec, normalizedRotationAxis, angleInRad);
+
+    Matrix ret;
+    FOR(a,0,3)
+    {
+        FOR(b,0,3)
+        {
+            ret.ar[b][a] = cAr[a].ar[b];
+        }
+    }
+    ret.ar[3][3] = 1;
+
+    return ret;
 }
 
 Matrix getRotateMatrix(ifstream &in)
 {
-    double angle, ax, ay, az;
-    in >> angle >> ax >> ay >> az;
-    return getRotateMatrix(angle, ax, ay, az);
+    double angleInDeg, ax, ay, az;
+    in >> angleInDeg >> ax >> ay >> az;
+
+    double angleInRad = angleInDeg * PI / 180;
+    return getRotateMatrix(angleInRad, ax, ay, az);
 }
 
 
@@ -1013,10 +1054,12 @@ int main()
         }
         else if ( command == "pop" )
         {
+            curModelingMat = matStak.top();
             matStak.pop();
         }
         else if ( command == "end" )
         {
+            stage1 << endl;
             break;
         }
         else
